@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "coup-wesworld-io"
+version = "0.1.0"
+description = ""
+authors = ["Wes Lorenzini <wes321@gmail.com>"]
+readme = "README.md"
+packages = [{include = "coup"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.104.1"
+uvicorn = {extras = ["standard"], version = "^0.24.0.post1"}
+typer = {extras = ["all"], version = "^0.9.0"}
+python-dotenv = "^1.0.0"
+flake8 = "^6.1.0"
+isort = "^5.12.0"
+black = "^23.11.0"
+
+# isort configuration compatible with Black
+autopep8 = "^2.0.4"
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+
+# black configuration (optional, Black is quite opinionated)
+[tool.black]
+line-length = 88
+
+# flake8 configuration (optional, adjust as needed)
+[tool.flake8]
+max-line-length = 88
+ignore = "E203, E501, W503"
+exclude = ".git,__pycache__,build,dist"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

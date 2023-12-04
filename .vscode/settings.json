@@ -1,0 +1,9 @@
+{
+    "python.pythonPath": "./.venv/bin/python",
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Path": "./.venv/bin/flake8",
+        "source.organizeImports": true,
+        "source.fixAll": true
+    },
+}
