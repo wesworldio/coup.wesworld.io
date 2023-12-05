@@ -19,3 +19,7 @@
 
 ## To Test a group of Bots playing X amount of games back to back
 1. From command line run `make run-games games=3`
+
+
+## To Test a parallel group of Bots playing X amount of games back to back
+1. From command line run `make run-parallel groups=42 games=1`
