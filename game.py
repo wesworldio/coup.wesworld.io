@@ -150,6 +150,7 @@ class Game:
             player for player in self.players if player.state == PlayerState.PLAYING
         ]
         if len(playing_players) == 1:
+            self.game_view.display_empty_line(2)
             self.game_view.display_message("Game Over")
             self.game_view.display_message(
                 f":trophy: {playing_players[0].name} wins! :trophy:"
@@ -161,12 +162,14 @@ class Game:
             return True
 
         if len(self.deck.cards) == 0:
+            self.game_view.display_empty_line(2)
             self.game_view.display_message(
                 "[DEBUG][GAME]:end: Game over: No cards left in the deck"
             )
             return True
 
         if len(self.players) == 0:
+            self.game_view.display_empty_line(2)
             self.game_view.display_message(
                 "[DEBUG][GAME]:end: Game over: No players left"
             )
@@ -180,6 +183,7 @@ class Game:
         if DEBUG:
             self.game_view.display_message(f"[DEBUG][GAME] decide_play_again started")
 
+        self.game_view.display_empty_line(2)
         self.game_view.display_message(
             f"[yellow]Would you like to play again? (y/n)[/yellow]"
         )
