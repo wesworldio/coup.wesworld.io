@@ -101,25 +101,38 @@ class Game:
         self.game_view.display_players()
 
     def choose_player_count(self):
-        players_wanted = self.set_player_var(
-            player_var="players_wanted",
-            question=f"[yellow]How many sneaky players shall you take on? (1 - {self.max_players})[/yellow]",
-        )
-        if int(players_wanted) < 1 or int(players_wanted) > self.max_players:
-            self.game_view.display_message(
-                f"Please choose a number between 1 and {self.max_players}"
-            )
-            self.choose_player_count()
-            return
+        players_wanted = self.player_vars.get("players_wanted", None)
+        player_bot_name_start_index = 2
 
+        if self.player_vars.get("type", "human") == "bot":
+            player_bot_name_start_index = 1
+
+        if self.player_vars.get("type", "human") == "human":
+            players_wanted = self.set_player_var(
+                player_var="players_wanted",
+                question=f"[yellow]How many sneaky players shall you take on? (1 - {self.max_players})[/yellow]",
+            )
+            if int(players_wanted) < 1 or int(players_wanted) > self.max_players:
+                self.game_view.display_message(
+                    f"Please choose a number between 1 and {self.max_players}"
+                )
+                self.choose_player_count()
+                return
+
+        self.game_view.display_message(f"Players wanted {players_wanted}")
         for i in range(int(players_wanted)):
-            self.players.append(self.setup_player(f"Player {i+2}", "bot"))
+            self.players.append(
+                self.setup_player(f"Player {player_bot_name_start_index}", "bot")
+            )
+            player_bot_name_start_index += 1
 
     def choose_player_name(self):
         player_name = self.set_player_var(
             player_var="name", question="What's your name?"
         )
-        self.players.append(self.setup_player(player_name, "human"))
+
+        if self.player_vars.get("type", "human") == "human":
+            self.players.append(self.setup_player(player_name, player_type="human"))
 
         self.game_view.display_message(f"Welcome to Coup {player_name}!")
         self.game_view.cli_spacing()

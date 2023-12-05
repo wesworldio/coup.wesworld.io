@@ -2,6 +2,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from config import coins_text
 from styles import style_text
 
 
@@ -44,7 +45,7 @@ class GameView:
 
     def display_turn_start(self, player):
         self.console.print(f"\n[bold]{player.name}[/bold]'s turn:")
-        self.console.print(f"[gray70]{player.coins} coins[/gray70]")
+        self.console.print(coins_text(player.coins))
         player.player_cards()
 
         self.display_players()

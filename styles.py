@@ -10,8 +10,6 @@ styles = {
     "Contessa": "[bold red3]Contessa[/bold red3]",
     "Duke": "[bold deep_pink3]Duke[/bold deep_pink3]",
     "Tax": "[bold deep_pink3]Tax[/bold deep_pink3]",
-    "coins": "[grey70]coins[/grey70]",
-    "coin": "[grey70]coin[/grey70]",
 }
 
 

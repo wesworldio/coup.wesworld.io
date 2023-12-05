@@ -269,7 +269,9 @@ class Player:
     def choose_action(self):
         if self.coins >= 10:
             self.game_view.display_empty_line()
-            self.game_view.display_message(f"{self.name} has [grey70]10+ coins[/grey70] so they must perform a coup")
+            self.game_view.display_message(
+                f"{self.name} has {coins_text(self.coins)} so they must perform a coup"
+            )
             for action in self.actions:
                 if action["name"] == "Coup":
                     self.chosen_action = action
@@ -388,7 +390,9 @@ class Player:
             self.game_view.display_error_message("Invalid choice")
             return self.choose_player()
         elif choice == self.game.current_player_index:
-            self.game_view.display_error_message("player can't perform action on themselves")
+            self.game_view.display_error_message(
+                "player can't perform action on themselves"
+            )
             return self.choose_player()
         elif self.game.players[choice].state == PlayerState.OUT:
             self.game_view.display_error_message(
@@ -419,11 +423,21 @@ class Player:
         self.game_view.display_message(
             f"[yellow]Which card would {self.name} like to choose?[/yellow]"
         )
-        choice = int(typer.prompt("")) - 1
+
+        choice = random.randint(0, len(self.cards) - 1)
+
+        if self.type == "bot":
+            time.sleep(BOT_THINK_TIME)
+            self.chosen_card = self.cards[choice]
+            self.chosen_card["state"] = CardState.VISIBLE
+            return self.chosen_card
+        else:
+            choice = int(typer.prompt("")) - 1
 
         if choice >= len(self.cards):
             self.game_view.display_error_message("Invalid choice")
             return self.choose_card(self)
+
         self.chosen_card = self.cards[choice]
         self.chosen_card["state"] = CardState.VISIBLE
 
@@ -473,7 +487,6 @@ class Player:
             self.game_view.display_error_message("Invalid choice")
             return self.decide_block()
 
-
     def challenge(self, sender_player):
         self.game_view.display_empty_line()
         self.game_view.display_message(
@@ -503,11 +516,10 @@ class Player:
             )
             return True
 
-
     def income(self):
         self.game.players[self.game.current_player_index].coins += 1
         self.game_view.display_message(
-            f"[grey70]{self.name} now has {self.game.players[self.game.current_player_index].coins} {style_text('coins')}[/grey70]"
+            f"[grey70]{self.name} now has {coins_text(self.game.players[self.game.current_player_index].coins)}[/grey70]"
         )
 
     def foreign_aid(self):
@@ -529,7 +541,7 @@ class Player:
         self.rec_player = self.choose_player()
 
         self.game_view.display_message(
-            f"[yellow]{self.name} paid [grey70]7 {style_text('coins')}[/grey70] to do a coup on {self.rec_player.name}[/yellow]"
+            f"[yellow]{self.name} paid {coins_text(7)} to do a coup on {self.rec_player.name}[/yellow]"
         )
         self.rec_player.choose_card()
         self.game_view.display_message(
@@ -557,7 +569,7 @@ class Player:
     def tax(self):
         self.game.players[self.game.current_player_index].coins += 3
         self.game_view.display_message(
-            f"[grey70]{self.name} will take 3 {style_text('coins')}[/grey70]"
+            f"[grey70]{self.name} will take {coins_text(3)}[/grey70]"
         )
 
     def exchange(self):
@@ -601,11 +613,14 @@ class Player:
             self.game_view.display_debug_message("[DEBUG] steal started")
 
         self.rec_player = self.choose_player()
-        self.rec_player.coins -= 2
-        self.coins += 2
+        stolen_coins = 2
+        if self.rec_player.coins < stolen_coins:
+            stolen_coins = self.rec_player.coins
+
+        self.coins += stolen_coins
         os.system("clear")
         self.game_view.display_message(
-            f"{self.name} chose to {style_text('steal')} [gray70]{style_text('coins')}[/gray70] from {self.rec_player.name}"
+            f"{self.name} 1chose to {style_text('steal')} {coins_text(stolen_coins)} from {self.rec_player.name}"
         )
 
     def contessa(self):

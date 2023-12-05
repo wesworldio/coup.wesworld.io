@@ -43,6 +43,17 @@ BOT_THINK_TIME = float(os.environ.get("BOT_THINK_TIME", 1.0))
 console = Console()
 
 
+def coins_display(coins):
+    if coins == 1:
+        return "coin"
+    else:
+        return "coins"
+
+
+def coins_text(coins):
+    return f"[grey70]{coins} {coins_display(coins)}[/grey70]"
+
+
 def cli_spacing():
     typer.echo("")
     typer.echo("")

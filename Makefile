@@ -1,4 +1,4 @@
-.PHONY = install-poetry install run lint
+.PHONY = install-poetry install run lint run-bots
 .DEFAULT_GOAL = run
 
 
@@ -15,6 +15,9 @@ install:
 
 run:
 	poetry run python cli.py
+
+run-bots:
+	PLAYER_TYPE=bot BOT_THINK_TIME=0.0001 poetry run python cli.py
 
 lint:
 	poetry run isort .
