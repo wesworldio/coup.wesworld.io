@@ -229,6 +229,8 @@ class Player:
         if self.sender_player.state == PlayerState.OUT:
             return
 
+        self.sender_player.state = PlayerState.TURN
+
         self.game_view.display_turn_start(self)
 
         self.choose_action()
@@ -236,6 +238,8 @@ class Player:
         self.turn_validate()
 
         self.turn_end()
+
+        self.sender_player.state = PlayerState.PLAYING
 
     def random_action_choice(self):
         choice = random.randint(0, len(self.actions) - 1)
