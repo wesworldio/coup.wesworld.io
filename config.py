@@ -87,6 +87,7 @@ DEBUG = os.getenv("DEBUG", "False").lower() in ["true", "1"]
 WRITE_LOG = os.getenv("WRITE_LOG", "True").lower() in ["true", "1"]
 CHEAT_SEE_ALL_CARDS = os.getenv("CHEAT_SEE_ALL_CARDS", "False").lower() in ["true", "1"]
 BOT_THINK_TIME = float(os.environ.get("BOT_THINK_TIME", 1.0))
+GAME_COUNT = os.environ.get("GAME_COUNT", 1)
 
 console = Console()
 

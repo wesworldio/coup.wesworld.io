@@ -156,8 +156,7 @@ class Game:
                 f":trophy: {playing_players[0].name} wins! :trophy:"
             )
             self.game_view.cli_spacing()
-            if self.decide_play_again():
-                self.start_game()
+            self.decide_play_again()
 
             return True
 
@@ -179,7 +178,15 @@ class Game:
             self.game_view.display_message("[DEBUG][GAME] game_over check ended")
         return False
 
+    def is_all_bots(self):
+        for player in self.players:
+            if player.type == "human":
+                return False
+        return True
+
     def decide_play_again(self):
+        global GAME_COUNT
+
         if DEBUG:
             self.game_view.display_message(f"[DEBUG][GAME] decide_play_again started")
 
@@ -187,9 +194,28 @@ class Game:
         self.game_view.display_message(
             f"[yellow]Would you like to play again? (y/n)[/yellow]"
         )
+
+        if self.is_all_bots():
+            if not GAME_COUNT:
+                GAME_COUNT = 1
+
+            GAME_COUNT = int(GAME_COUNT) - 1
+            self.game_view.display_message(
+                f"GAMES_LEFT: {GAME_COUNT}"
+            )
+            if GAME_COUNT > 0:
+                self.start_game()
+                return True
+            else:
+                self.game_view.display_message(
+                    f"ALL GAMES PLAYED"
+                )
+                return False
+
         choice = typer.prompt("")
 
         if choice == "y":
+            self.start_game()
             return True
         elif choice == "n":
             return False

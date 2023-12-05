@@ -15,3 +15,7 @@
 ## To Play with Bots Only:
 
 1. From command line run `make run-bots`
+
+
+## To Test a group of Bots playing X amount of games back to back
+1. From command line run `make run-games games=3`

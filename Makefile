@@ -17,8 +17,11 @@ run:
 	poetry run python cli.py
 
 run-bots:
-	PLAYER_TYPE=bot BOT_THINK_TIME=0.0001 poetry run python cli.py
+	PLAYER_TYPE=bot BOT_THINK_TIME=0 poetry run python cli.py
 
+run-games:
+	PLAYER_TYPE=bot BOT_THINK_TIME=0 GAME_COUNT=$(games) poetry run python cli.py
+	
 lint:
 	poetry run isort .
 	poetry run black .
