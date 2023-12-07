@@ -19,10 +19,10 @@ install:
 	poetry install
 
 run:
-	poetry run python cli.py
+	GAME_COUNT=1 poetry run python cli.py
 
 run-bots:
-	PLAYER_TYPE=bot BOT_THINK_TIME=0 poetry run python cli.py
+	PLAYER_TYPE=bot BOT_THINK_TIME=0 GAME_COUNT=1 poetry run python cli.py
 
 run-games:
 	PLAYER_TYPE=bot BOT_THINK_TIME=0 GAME_COUNT=$(games) poetry run python cli.py

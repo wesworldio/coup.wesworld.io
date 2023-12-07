@@ -63,7 +63,15 @@ class Deck:
 
     @classmethod
     def cards_to_string(cls, cards):
-        card_names = [d["name"] for d in cards if "name" in d]
+        card_names = []
+
+        for card in cards:
+            if "name" in card:
+                if card.get("state") == CardState.VISIBLE:
+                    card_names.append(f"[{card['name']}]")
+                else:
+                    card_names.append(card["name"])
+
         return style_text(", ".join(card_names))
 
     @classmethod

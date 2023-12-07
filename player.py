@@ -221,7 +221,8 @@ class Player:
         )
 
     def turn_start(self):
-        os.system("clear")
+        if CLEAR_VIEW:
+            os.system("clear")
         self.update_players_state()
         self.rec_player = None
         self.sender_player = self.game.players[self.game.current_player_index]
@@ -261,14 +262,20 @@ class Player:
         return choice
 
     def input_action_exchange(self):
-        choice = None
         if self.type == "bot":
-            time.sleep(BOT_THINK_TIME)
-            choices = random.sample(range(1, 5), 2)
-            choice = f"{choices[0]} {choices[1]}"
+            # Automatically choose two cards for Player 2 (a bot)
+            chosen_indices = [str(random.randint(1, 4)), str(random.randint(1, 4))]
+            return " ".join(chosen_indices)
         else:
-            choice = typer.prompt("")
-        return choice
+            choice = typer.prompt("Enter the indices of the two cards you want to keep (e.g., 1 3): ")
+            selected_indices = choice.split()
+            
+            if len(selected_indices) != 2 or selected_indices[0] == selected_indices[1]:
+                self.game_view.display_error_message("Invalid selection. Please choose two distinct cards.")
+                return self.input_action_exchange()
+            
+            return choice
+
 
     def choose_action(self):
         if self.coins >= 10:
@@ -318,8 +325,8 @@ class Player:
             if player.name == sender_player.name:
                 continue
 
-            if player.state == PlayerState.PLAYING:
-                if player.decide_challenge():
+            if player.state != PlayerState.OUT:
+                if player.decide_challenge(sender_player):
                     challenge_result = player.challenge(sender_player)
                     if challenge_result:
                         return False
@@ -337,13 +344,25 @@ class Player:
             if player.name == sender_player.name:
                 continue
 
-            if player.state == PlayerState.PLAYING:
+            if player.state != PlayerState.OUT:
                 if player.decide_block():
-                    return False
+                    block_result = player.block(sender_player)
+                    if block_result:
+                        return False
+                    else:
+                        continue
 
         self.game_view.display_empty_line()
         return True
 
+    def block(self, sender_player):
+        self.game_view.display_empty_line()
+        self.game_view.display_message(
+            f"[yellow]{self.name} blocked {sender_player.name}[/yellow]"
+        )
+        self.game_view.display_empty_line()
+        return True
+        
     def both_cards_visible(self):
         both_cards_visible = True
 
@@ -355,7 +374,7 @@ class Player:
 
     def update_players_state(self):
         for player in self.game.players:
-            if player.both_cards_visible() and player.state == PlayerState.PLAYING:
+            if player.both_cards_visible() and player.state != PlayerState.OUT:
                 player.state = PlayerState.OUT
                 self.game_view.display_empty_line()
                 self.game_view.display_message(
@@ -368,46 +387,57 @@ class Player:
                     f":skull::skull::skull::skull::skull::skull::skull::skull::skull::skull:"
                 )
                 self.game_view.display_empty_line()
+                self.game_view.display_players()
 
     def turn_end(self):
         if self.rec_player:
             self.game_view.display_message(
                 f"{self.name} chose to {style_text(self.chosen_action['action_string'])} {self.rec_player.name}"
             )
+            self.game_view.display_players()
+        
 
     def choose_player(self):
         if self.type == "bot":
             time.sleep(BOT_THINK_TIME)
-            choice = random.randint(0, len(self.game.players) - 1)
-            while choice == self.game.current_player_index:
-                choice = random.randint(0, len(self.game.players) - 1)
-            return self.game.players[choice]
+            available_players = [
+                player for player in self.game.players if player.state != PlayerState.OUT and player != self
+            ]
+            if not available_players:
+                return None  # No valid players to choose from
+            choice = random.choice(available_players)
+            return choice
 
         self.game_view.display_message(
             f"[yellow]Who does {self.name} want to {style_text(self.chosen_action['action_string'])}?[/yellow]"
         )
-        self.game.list_players()
-        choice = typer.prompt("")
-        choice = int(choice) - 1
+        available_players = [
+            (i + 1, player)
+            for i, player in enumerate(self.game.players)
+            if player.state != PlayerState.OUT
+        ]
 
-        if choice >= len(self.game.players):
+        if not available_players:
+            self.game_view.display_error_message("No valid players to choose from.")
+            return None  # No valid players to choose from
+
+        for index, player in available_players:
+            self.game_view.display_message(f"[cyan]{index}[/cyan]: {player.name}")
+
+        choice = typer.prompt("Enter the number of the chosen player: ")
+
+        if not choice.isdigit() or int(choice) < 1 or int(choice) > len(available_players):
             self.game_view.display_error_message("Invalid choice")
             return self.choose_player()
-        elif choice == self.game.current_player_index:
-            self.game_view.display_error_message(
-                "player can't perform action on themselves"
-            )
-            return self.choose_player()
-        elif self.game.players[choice].state == PlayerState.OUT:
-            self.game_view.display_error_message(
-                f"{self.game.players[choice].name} is out of the game. Please choose another player."
-            )
-            return self.choose_player()
-        else:
-            self.game_view.display_message(
-                f"{self.game.players[self.game.current_player_index].name} chose {style_text(self.game.players[choice].name)}"
-            )
-            return self.game.players[choice]
+
+        chosen_index = int(choice) - 1
+        chosen_player = available_players[chosen_index][1]
+
+        self.game_view.display_message(
+            f"{self.game.players[self.game.current_player_index].name} chose {style_text(chosen_player.name)}"
+        )
+        return chosen_player
+
 
     def choose_card(self):
         hidden_cards = [
@@ -418,9 +448,12 @@ class Player:
             self.chosen_card["state"] = CardState.VISIBLE
             return self.chosen_card
 
-        table = Table("Choice", "Card", "State")
+        table = DisplayTable()
+        table.add_column("Choice", justify="left")
+        table.add_column("Card", justify="left")
+        table.add_column("State", justify="left")
         for i, card in enumerate(self.cards):
-            table.add_row(str(i + 1), style_text(card["name"]), str(card["state"]))
+            table.add_row([str(i + 1), style_text(card["name"]), str(card["state"])])
 
         self.game_view.display_table(table)
 
@@ -440,17 +473,14 @@ class Player:
 
         if choice >= len(self.cards):
             self.game_view.display_error_message("Invalid choice")
-            return self.choose_card(self)
+            return self.choose_card()
 
         self.chosen_card = self.cards[choice]
         self.chosen_card["state"] = CardState.VISIBLE
 
         return self.chosen_card
 
-    def decide_challenge(self):
-        self.game_view.display_message(
-            f"[yellow]Would {self.name} like to challenge? (y/n)[/yellow]"
-        )
+    def decide_challenge(self, sender_player):
         if self.type == "bot":
             time.sleep(BOT_THINK_TIME)
             choice = random.randint(0, 1)
@@ -459,6 +489,9 @@ class Player:
             else:
                 return True
 
+        self.game_view.display_message(
+            f"[yellow]Would {self.name} like to challenge {sender_player.name}? (y/n)[/yellow]"
+        )
         choice = typer.prompt("")
 
         if choice == "y":
@@ -467,12 +500,9 @@ class Player:
             return False
         else:
             self.game_view.display_error_message("Invalid choice")
-            return self.decide_challenge()
+            return self.decide_challenge(sender_player)
 
     def decide_block(self):
-        self.game_view.display_message(
-            f"[yellow]Would {self.name} like to block? (y/n)[/yellow]"
-        )
         if self.type == "bot":
             time.sleep(BOT_THINK_TIME)
             choice = random.randint(0, 1)
@@ -481,6 +511,9 @@ class Player:
             else:
                 return True
 
+        self.game_view.display_message(
+            f"[yellow]Would {self.name} like to block? (y/n)[/yellow]"
+        )
         choice = typer.prompt("")
 
         if choice == "y":
@@ -496,11 +529,13 @@ class Player:
         self.game_view.display_message(
             f"[yellow]{self.name} challenged {sender_player.name}[/yellow]"
         )
+        self.game_view.display_empty_line()
 
-        if self.type == "bot":
-            chosen_card = random.choice(self.cards)
+
+        if sender_player.type == "bot":
+            chosen_card = random.choice(sender_player.cards)
             self.game_view.display_message(
-                f"{self.name} chose to reveal {style_text(chosen_card['name'])}"
+                f"{sender_player.name} chose to reveal {style_text(chosen_card['name'])}"
             )
         else:
             self.game_view.display_message(
@@ -544,6 +579,8 @@ class Player:
         self.game.players[self.game.current_player_index].coins -= 7
         self.rec_player = self.choose_player()
 
+        if self.rec_player is None:
+            return
         self.game_view.display_message(
             f"[yellow]{self.name} paid {coins_text(7)} to do a coup on {self.rec_player.name}[/yellow]"
         )
@@ -564,7 +601,8 @@ class Player:
 
         self.game.players[self.game.current_player_index].coins -= 3
         self.rec_player = self.choose_player()
-        os.system("clear")
+        if CLEAR_VIEW:
+            os.system("clear")
         self.game_view.display_message(
             f"[yellow]{self.name} chose to {style_text('assassinate')} {self.rec_player.name}[/yellow]"
         )
@@ -580,14 +618,16 @@ class Player:
         if DEBUG:
             self.game_view.display_debug_message("[DEBUG] exchange started")
 
-        self.game_view.display_message(f"[yellow]{self.name} pulled these cards.")
         new_cards = [self.game.deck.get_next_card(), self.game.deck.get_next_card()]
         new_cards = self.cards + new_cards
-        self.game_view.display_message(Deck.cards_to_list(new_cards))
 
-        self.game_view.display_message(
-            f"[yellow]Which two would {self.name} like to keep? (e.g., 1 3)[/yellow]"
-        )
+        if self.type != "bot":
+            self.game_view.display_message(f"[yellow]{self.name} pulled these cards.")
+            self.game_view.display_message(Deck.cards_to_list(new_cards))
+            self.game_view.display_message(
+                f"[yellow]Which two would {self.name} like to keep? (e.g., 1 3)[/yellow]"
+            )
+        
         choice = self.input_action_exchange()
 
         try:
@@ -616,16 +656,58 @@ class Player:
         if DEBUG:
             self.game_view.display_debug_message("[DEBUG] steal started")
 
-        self.rec_player = self.choose_player()
+        self.rec_player = self.choose_target()
+
+        if self.rec_player is None:
+            self.game_view.display_message(f"{self.name} has no valid targets to steal from.")
+            return
+
         stolen_coins = 2
         if self.rec_player.coins < stolen_coins:
             stolen_coins = self.rec_player.coins
 
         self.coins += stolen_coins
-        os.system("clear")
+        if CLEAR_VIEW:
+            os.system("clear")
         self.game_view.display_message(
-            f"{self.name} 1chose to {style_text('steal')} {coins_text(stolen_coins)} from {self.rec_player.name}"
+            f"{self.name} chose to {style_text('steal')} {coins_text(stolen_coins)} from {self.rec_player.name}"
         )
+
+    def choose_target(self):
+        valid_targets = [
+            player
+            for player in self.game.players
+            if player != self and player.state != PlayerState.OUT
+        ]
+
+        if not valid_targets:
+            return None  # No valid targets to steal from
+
+        self.game_view.display_message(
+            f"[yellow]Who does {self.name} want to steal from?[/yellow]"
+        )
+        
+        while True:
+            for i, target in enumerate(valid_targets):
+                self.game_view.display_message(f"[cyan]{i + 1}[/cyan]: {target.name}")
+
+
+            choice = random.randint(0, len(valid_targets) - 1)
+
+            if self.type == "bot":
+                time.sleep(BOT_THINK_TIME)
+                chosen_index = choice
+                chosen_target = valid_targets[chosen_index]
+                return chosen_target
+
+            choice = typer.prompt("Enter the number of the chosen target: ")
+
+            if choice.isdigit() and 1 <= int(choice) <= len(valid_targets):
+                chosen_index = int(choice) - 1
+                chosen_target = valid_targets[chosen_index]
+                return chosen_target
+
+            self.game_view.display_error_message("Invalid choice. Please choose a valid target.")
 
     def contessa(self):
         if DEBUG:

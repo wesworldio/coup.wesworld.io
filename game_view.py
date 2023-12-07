@@ -14,6 +14,7 @@ class GameView:
 
     def cli_spacing(self):
         self.write_log("")  # Add an empty line to the log
+        self.console.print("")  # Print the message
 
     def display_message(self, message):
         self.write_log(message)  # Write the message to the log
@@ -24,18 +25,23 @@ class GameView:
 
     def display_table(self, table):
         self.write_log(table)  # Write the table to the log
-        # self.console.print(table)  # Print the table
+        self.console.print(table.to_rich_table()) # Print the table
+
+    def display_debug_message(self, message):
+        self.write_log(message)  # Write the table to the log
+        self.console.print(message) # Print the table
+
 
     def display_players(self):
         self.write_log("Players:")
 
         table = DisplayTable("Players")
-        # table.add_column("#", justify="left")
-        # table.add_column("Name", justify="left")
-        # table.add_column("Type", justify="left")
-        # table.add_column("Coins", justify="left")
-        # table.add_column("Cards", justify="left")
-        # table.add_column("Player State", justify="left")
+        table.add_column("#", justify="left")
+        table.add_column("Name", justify="left")
+        table.add_column("Type", justify="left")
+        table.add_column("Coins", justify="left")
+        table.add_column("Cards", justify="left")
+        table.add_column("Player State", justify="left")
         table_data = []
         for i, player in enumerate(self.game.players):
             row = [
@@ -49,14 +55,14 @@ class GameView:
             table_data.append(row)
             table.add_row(row)
 
-        self.display_table(table_data)
+        self.display_table(table)
 
     def display_game_over(self, winner):
-        message = f"\n\nGame Over\n:trophy: {winner.name} wins! :trophy:"
+        message = f"\n[bold]Round {self.game.game_round}[/bold]\n\nGame Over\n:trophy: {winner.name} wins! :trophy:"
         self.display_message(message)
 
     def display_turn_start(self, player):
-        message = f"\n[bold]{player.name}[/bold]'s turn:\n{coins_text(player.coins)}"
+        message = f"\n[bold]Round {self.game.game_round}[/bold]\n[bold]{player.name}[/bold]'s turn:\n{coins_text(player.coins)}"
         self.display_message(message)
         player.player_cards()
         self.display_players()

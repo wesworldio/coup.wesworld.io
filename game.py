@@ -147,10 +147,11 @@ class Game:
             return True
 
         playing_players = [
-            player for player in self.players if player.state == PlayerState.PLAYING
+            player for player in self.players if player.state != PlayerState.OUT
         ]
         if len(playing_players) == 1:
             self.game_view.display_empty_line(2)
+            self.game_view.display_message("Round " + str(self.game_round))
             self.game_view.display_message("Game Over")
             self.game_view.display_message(
                 f":trophy: {playing_players[0].name} wins! :trophy:"

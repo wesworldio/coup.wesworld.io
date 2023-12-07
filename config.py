@@ -36,6 +36,8 @@ class PlayerState(Enum):
 
 class DisplayTableEncoder(json.JSONEncoder):
     def default(self, obj):
+        if isinstance(obj, CardState):
+            return obj.name
         if isinstance(obj, DisplayTable):
             return {
                 "title": obj.title,
@@ -61,7 +63,7 @@ class DisplayTableEncoder(json.JSONEncoder):
 
 
 class DisplayTable:
-    def __init__(self, title):
+    def __init__(self, title = ""):
         self.title = title
         self.columns = []
         self.rows = []
@@ -69,21 +71,31 @@ class DisplayTable:
     def add_column(self, header, justify="left"):
         self.columns.append(Column(header, justify=justify))
 
-    def add_row(self, *args):
-        self.rows.append(Row(*args))
+    def add_row(self, args):
+        self.rows.append([str(arg) for arg in args])
 
-    def __str__(self):
+    def to_rich_table(self):
+        table = Table()
+        for column in self.columns:
+            table.add_column(column.header, justify=column.justify)
+        for row in self.rows:
+            table.add_row(*row)
+        return table
+
+    def to_dict(self):
         return {
             "title": self.title,
             "columns": self.columns,
             "rows": self.rows,
         }
-
+    def __str__(self):
+        return json.dumps(self.to_dict(), cls=DisplayTableEncoder, indent=4)
 
 # Load .env file
 load_dotenv()
 
 DEBUG = os.getenv("DEBUG", "False").lower() in ["true", "1"]
+CLEAR_VIEW = os.getenv("CLEAR_VIEW", "True").lower() in ["true", "1"]
 WRITE_LOG = os.getenv("WRITE_LOG", "True").lower() in ["true", "1"]
 CHEAT_SEE_ALL_CARDS = os.getenv("CHEAT_SEE_ALL_CARDS", "False").lower() in ["true", "1"]
 BOT_THINK_TIME = float(os.environ.get("BOT_THINK_TIME", 1.0))
